@@ -1,163 +1,677 @@
-<!-- Sägezahnspannung: zusätzliche Funktion -->
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Oszilloskop: X- und Y-Ablenkung</title>
+
 <style>
-  #sägezahnBereich {
-    display: none;
-    background: #1c2b40;
-    color: white;
-    padding: 20px;
-    margin-top: 20px;
-    border-radius: 14px;
-    font-family: Arial, sans-serif;
+:root {
+  --bg: #0e1727;
+  --panel: #1c2b40;
+  --border: #34465f;
+  --text: #e7edf8;
+  --muted: #c0ccdc;
+  --blue: #2c70bd;
+  --green: #70ffac;
+  --orange: #ffae54;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+}
+
+.container {
+  width: min(1100px, 94%);
+  margin: 32px auto 55px;
+}
+
+h1 {
+  font-size: clamp(25px, 3vw, 36px);
+  margin: 0 0 12px;
+}
+
+.intro {
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.slider-area {
+  flex: 1 1 320px;
+}
+
+.slider-area label {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.value {
+  color: var(--green);
+  font-weight: bold;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: #70e6a1;
+  cursor: pointer;
+}
+
+button {
+  border: none;
+  background: var(--blue);
+  color: white;
+  padding: 13px 17px;
+  border-radius: 9px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+button:hover {
+  filter: brightness(1.15);
+}
+
+button.active {
+  background: #13865d;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 3px;
+}
+
+.status {
+  color: var(--muted);
+  margin-top: 14px;
+  min-height: 24px;
+}
+
+.screen {
+  width: 100%;
+  display: block;
+  background: #071e17;
+  border-radius: 10px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.green { background: var(--green); }
+.orange { background: var(--orange); }
+.blue { background: #6bbcff; }
+
+.explanation {
+  color: var(--muted);
+}
+
+.explanation strong {
+  color: var(--text);
+}
+
+.small {
+  font-size: 13px;
+}
+
+@media (max-width: 650px) {
+  button {
+    flex: 1 1 170px;
   }
 
-  #sägezahnButton {
-    background: #2874bd;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 18px;
-    cursor: pointer;
-    font-weight: bold;
-    margin-top: 15px;
+  .panel {
+    padding: 14px;
   }
-
-  #sägezahnBereich svg {
-    width: 100%;
-    max-width: 650px;
-    display: block;
-    margin: 15px auto;
-  }
+}
 </style>
+</head>
 
-<button id="sägezahnButton" onclick="sägezahnUmschalten()">
-  Sägezahnspannung anzeigen
-</button>
+<body>
 
-<div id="sägezahnBereich">
-  <h2>Die Sägezahnspannung</h2>
+<main class="container">
 
-  <p>
-    Die Sägezahnspannung steuert die X-Ablenkung.
-    Sie steigt gleichmäßig an und fällt anschließend
-    sehr schnell auf ihren Anfangswert zurück.
+  <h1>Oszilloskop: X- und Y-Ablenkung</h1>
+
+  <p class="intro">
+    Verändere die Spannung und beobachte den Leuchtpunkt.
+    Schalte danach die X-Ablenkung ein, damit der Punkt
+    von links nach rechts läuft.
+    Mit „Wechselspannung“ entsteht eine Wellenkurve.
+    Mit „Sägezahnspannung“ kannst du eine weitere
+    Spannungsform untersuchen.
   </p>
 
-  <svg viewBox="0 0 650 260">
-    <!-- Achsen -->
-    <line x1="55" y1="20" x2="55" y2="225"
-          stroke="white" stroke-width="2"/>
+  <!-- BEDIENFELD -->
+  <section class="panel">
 
-    <line x1="55" y1="225" x2="625" y2="225"
-          stroke="white" stroke-width="2"/>
+    <div class="controls">
 
-    <text x="60" y="17" fill="white" font-size="16">
-      Spannung U
-    </text>
+      <div class="slider-area">
+        <label for="ySlider">
+          Y-Spannung:
+          <span id="voltageLabel" class="value">+3,0 V</span>
+        </label>
 
-    <text x="550" y="250" fill="white" font-size="16">
-      Zeit t →
-    </text>
+        <input
+          id="ySlider"
+          type="range"
+          min="-5"
+          max="5"
+          step="0.1"
+          value="3"
+        >
+      </div>
 
-    <!-- Sägezahnverlauf -->
-    <path
-      d="M55 205
-         L235 45 L240 205
-         L420 45 L425 205
-         L605 45"
-      fill="none"
-      stroke="#38aaff"
-      stroke-width="5"
-      stroke-linejoin="round"
-    />
+      <button id="xButton">
+        X-Ablenkung einschalten
+      </button>
 
-    <!-- Beweglicher Punkt -->
-    <circle id="sägezahnPunkt"
-            cx="55"
-            cy="205"
-            r="8"
-            fill="#69ff9e"/>
-  </svg>
+      <button id="sineButton">
+        Wechselspannung einschalten
+      </button>
 
-  <p id="sägezahnErklärung">
-    Die Spannung steigt gleichmäßig an.
-  </p>
+      <button id="sawButton">
+        Sägezahnspannung einschalten
+      </button>
 
-  <p>
-    <strong>Merke:</strong>
-    Anstieg = Elektronenstrahl wandert nach rechts.
-    Schneller Rücksprung = Elektronenstrahl kehrt nach links zurück.
-  </p>
-</div>
+      <button id="resetButton">
+        Zurücksetzen
+      </button>
+
+    </div>
+
+    <p id="status" class="status"></p>
+
+  </section>
+
+  <!-- OSZILLOSKOP-BILDSCHIRM -->
+  <section class="panel">
+
+    <canvas
+      id="scope"
+      class="screen"
+      width="1000"
+      height="490"
+      aria-label="Interaktive Oszilloskop-Anzeige"
+    ></canvas>
+
+    <div class="legend">
+      <span>
+        <span class="dot green"></span>
+        Leuchtpunkt / Spur
+      </span>
+
+      <span>
+        <span class="dot orange"></span>
+        Y-Spannung
+      </span>
+
+      <span>
+        <span class="dot blue"></span>
+        X-Zeitbasis
+      </span>
+    </div>
+
+  </section>
+
+  <!-- PHYSIKALISCHE ERKLÄRUNG -->
+  <section class="panel explanation">
+
+    <h3>Physikalische Erklärung</h3>
+
+    <p>
+      <strong>Y-Ablenkung:</strong>
+      Die Messspannung beeinflusst das elektrische Feld
+      zwischen den Y-Ablenkplatten.
+      Dadurch wirkt eine Kraft auf die negativ geladenen
+      Elektronen. Die Höhe des Leuchtpunkts hängt
+      von der Spannung ab.
+    </p>
+
+    <p>
+      <strong>X-Ablenkung:</strong>
+      Eine Sägezahnspannung bewegt den Strahl
+      gleichmäßig von links nach rechts.
+      Beim schnellen Rücklauf wird er ausgeblendet.
+      Zusammen mit einer zeitlich veränderlichen
+      Y-Spannung wird ein Spannungsverlauf sichtbar.
+    </p>
+
+    <p>
+      <strong>Wechselspannung:</strong>
+      Eine sinusförmige Wechselspannung verändert
+      regelmäßig ihre Richtung und Stärke.
+      Dadurch bewegt sich der Leuchtpunkt
+      abwechselnd nach oben und unten.
+    </p>
+
+    <p>
+      <strong>Sägezahnspannung:</strong>
+      Diese Spannung steigt gleichmäßig an und
+      fällt anschließend sehr schnell auf ihren
+      Anfangswert zurück.
+      Ihr Verlauf erinnert an die Zähne einer Säge.
+    </p>
+
+    <p class="small">
+      Didaktisch vereinfachte Simulation eines klassischen
+      analogen Oszilloskops.
+      Positive Spannung wird hier als Ablenkung nach oben
+      dargestellt. Die tatsächliche Plattenpolung und
+      die Verstärkung hängen von der Schaltung ab.
+      Nicht maßstabsgetreu.
+    </p>
+
+  </section>
+
+</main>
 
 <script>
-  let sägezahnSichtbar = false;
-  let sägezahnAnimation = null;
+"use strict";
 
-  function sägezahnUmschalten() {
-    const bereich = document.getElementById("sägezahnBereich");
-    const button = document.getElementById("sägezahnButton");
+// HTML-Elemente
+const canvas = document.getElementById("scope");
+const ctx = canvas.getContext("2d");
 
-    sägezahnSichtbar = !sägezahnSichtbar;
+const slider = document.getElementById("ySlider");
+const voltageLabel = document.getElementById("voltageLabel");
 
-    bereich.style.display = sägezahnSichtbar
-      ? "block"
-      : "none";
+const xButton = document.getElementById("xButton");
+const sineButton = document.getElementById("sineButton");
+const sawButton = document.getElementById("sawButton");
+const resetButton = document.getElementById("resetButton");
 
-    button.textContent = sägezahnSichtbar
-      ? "Sägezahnspannung ausblenden"
-      : "Sägezahnspannung anzeigen";
+const statusText = document.getElementById("status");
 
-    if (sägezahnSichtbar) {
-      sägezahnStarten();
+// Zustand
+let yVoltage = 3;
+let xEnabled = false;
+
+// Mögliche Signale:
+// "constant", "sine", "saw"
+let signalMode = "constant";
+
+// Zeitsteuerung
+let phase = 0;
+let previousTime = null;
+
+// Zeichenfläche
+const plot = {
+  left: 68,
+  right: 952,
+  top: 48,
+  bottom: 445
+};
+
+const plotWidth = plot.right - plot.left;
+const plotHeight = plot.bottom - plot.top;
+const centerY = (plot.top + plot.bottom) / 2;
+
+// Eine Bildschirmdurchquerung dauert 3 Sekunden.
+const sweepDuration = 3;
+
+// Maximale vertikale Auslenkung
+const maxAmplitude = plotHeight * 0.43;
+
+// Spannungsanzeige formatieren
+function formatVoltage(value) {
+  const sign = value > 0 ? "+" : "";
+  return sign + value.toFixed(1).replace(".", ",") + " V";
+}
+
+// Spannung auf Bildschirmhöhe umrechnen
+function voltageToY(voltage) {
+  return centerY - (voltage / 5) * maxAmplitude;
+}
+
+// Signalspannung an einer bestimmten Phase
+function getVoltageAtPhase(p) {
+  if (signalMode === "sine") {
+    // Zwei vollständige Sinusperioden pro Bildschirm
+    return 4 * Math.sin(4 * Math.PI * p);
+  }
+
+  if (signalMode === "saw") {
+    // Zwei Sägezahnperioden pro Bildschirm
+    const cycle = (p * 2) % 1;
+
+    // 95 % gleichmäßiger Anstieg,
+    // 5 % schneller Rücksprung
+    if (cycle < 0.95) {
+      return -4 + 8 * (cycle / 0.95);
+    }
+
+    return 4 - 8 * ((cycle - 0.95) / 0.05);
+  }
+
+  return yVoltage;
+}
+
+// Hintergrund und Gitternetz zeichnen
+function drawGrid() {
+  ctx.fillStyle = "#071e17";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = "#29483d";
+  ctx.lineWidth = 1;
+
+  // Vertikale Linien
+  for (let i = 0; i <= 10; i++) {
+    const x = plot.left + (plotWidth / 10) * i;
+
+    ctx.beginPath();
+    ctx.moveTo(x, plot.top);
+    ctx.lineTo(x, plot.bottom);
+    ctx.stroke();
+  }
+
+  // Horizontale Linien
+  for (let i = 0; i <= 8; i++) {
+    const y = plot.top + (plotHeight / 8) * i;
+
+    ctx.beginPath();
+    ctx.moveTo(plot.left, y);
+    ctx.lineTo(plot.right, y);
+    ctx.stroke();
+  }
+
+  // Nulllinie
+  ctx.strokeStyle = "#779e8c";
+  ctx.setLineDash([6, 6]);
+
+  ctx.beginPath();
+  ctx.moveTo(plot.left, centerY);
+  ctx.lineTo(plot.right, centerY);
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+
+  // Beschriftungen
+  ctx.fillStyle = "#bdd7ca";
+  ctx.font = "bold 17px Arial";
+
+  ctx.fillText("Spannung U ↑", plot.left, 28);
+  ctx.fillText("0 V", plot.left + 8, centerY - 10);
+  ctx.fillText("Zeit t →", plot.right - 80, 475);
+
+  ctx.fillStyle = "#7cc4ff";
+  ctx.fillText(
+    xEnabled ? "X: Zeitbasis aktiv" : "X: ausgeschaltet",
+    plot.right - 190,
+    plot.top + 22
+  );
+}
+
+// Leuchtpunkt zeichnen
+function drawDot(x, y) {
+  // Leuchteffekt
+  const glow = ctx.createRadialGradient(
+    x, y, 1,
+    x, y, 25
+  );
+
+  glow.addColorStop(0, "rgba(112,255,172,0.5)");
+  glow.addColorStop(1, "rgba(112,255,172,0)");
+
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y, 25, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eigentlich sichtbarer Punkt
+  ctx.fillStyle = "#70ffac";
+  ctx.beginPath();
+  ctx.arc(x, y, 8, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Spur bis zur aktuellen Position zeichnen
+function drawTrace(currentPhase) {
+  if (!xEnabled) {
+    return;
+  }
+
+  ctx.save();
+
+  ctx.beginPath();
+  ctx.rect(
+    plot.left,
+    plot.top,
+    plotWidth,
+    plotHeight
+  );
+  ctx.clip();
+
+  ctx.strokeStyle = "#70ffac";
+  ctx.lineWidth = 2.7;
+  ctx.shadowColor = "#70ffac";
+  ctx.shadowBlur = 6;
+
+  ctx.beginPath();
+
+  const steps = Math.max(1, Math.floor(currentPhase * 900));
+
+  for (let i = 0; i <= steps; i++) {
+    const p = currentPhase * (i / steps);
+
+    const x = plot.left + p * plotWidth;
+    const y = voltageToY(getVoltageAtPhase(p));
+
+    if (i === 0) {
+      ctx.moveTo(x, y);
     } else {
-      cancelAnimationFrame(sägezahnAnimation);
+      ctx.lineTo(x, y);
     }
   }
 
-  function sägezahnStarten() {
-    const punkt = document.getElementById("sägezahnPunkt");
-    const erklärung = document.getElementById("sägezahnErklärung");
+  ctx.stroke();
+  ctx.restore();
+}
 
-    const dauer = 3000;
-    const anstiegDauer = 0.95;
-    const start = performance.now();
+// Text auf dem Bildschirm
+function drawVoltageText() {
+  ctx.fillStyle = "#ffae54";
+  ctx.font = "bold 21px Arial";
 
-    function animieren(zeit) {
-      if (!sägezahnSichtbar) return;
-
-      const phase = ((zeit - start) % dauer) / dauer;
-
-      let x, y;
-
-      if (phase < anstiegDauer) {
-        // Gleichmäßiger Anstieg
-        const p = phase / anstiegDauer;
-
-        x = 55 + p * 180;
-        y = 205 - p * 160;
-
-        erklärung.textContent =
-          "Die Spannung steigt gleichmäßig an. " +
-          "Der Elektronenstrahl wandert nach rechts.";
-      } else {
-        // Schneller Rücksprung
-        const p = (phase - anstiegDauer) /
-                  (1 - anstiegDauer);
-
-        x = 235 + p * 5;
-        y = 45 + p * 160;
-
-        erklärung.textContent =
-          "Die Spannung fällt schnell zurück. " +
-          "Der Elektronenstrahl kehrt nach links zurück.";
-      }
-
-      punkt.setAttribute("cx", x);
-      punkt.setAttribute("cy", y);
-
-      sägezahnAnimation = requestAnimationFrame(animieren);
-    }
-
-    sägezahnAnimation = requestAnimationFrame(animieren);
+  if (signalMode === "constant") {
+    ctx.fillText(
+      "U = " + formatVoltage(yVoltage),
+      plot.left + 12,
+      plot.bottom - 14
+    );
+  } else if (signalMode === "sine") {
+    ctx.fillText(
+      "Sinusförmige Wechselspannung",
+      plot.left + 12,
+      plot.bottom - 14
+    );
+  } else {
+    ctx.fillText(
+      "Sägezahnspannung",
+      plot.left + 12,
+      plot.bottom - 14
+    );
   }
+}
+
+// Status und Buttons aktualisieren
+function updateUI() {
+  voltageLabel.textContent = formatVoltage(yVoltage);
+
+  slider.disabled = signalMode !== "constant";
+
+  xButton.textContent = xEnabled
+    ? "X-Ablenkung ausschalten"
+    : "X-Ablenkung einschalten";
+
+  sineButton.textContent = signalMode === "sine"
+    ? "Wechselspannung ausschalten"
+    : "Wechselspannung einschalten";
+
+  sawButton.textContent = signalMode === "saw"
+    ? "Sägezahnspannung ausschalten"
+    : "Sägezahnspannung einschalten";
+
+  xButton.classList.toggle("active", xEnabled);
+  sineButton.classList.toggle("active", signalMode === "sine");
+  sawButton.classList.toggle("active", signalMode === "saw");
+
+  if (signalMode === "constant" && !xEnabled) {
+    statusText.textContent =
+      "Nur Y-Ablenkung: Der Punkt wird durch den " +
+      "Spannungsregler nach oben oder unten verschoben.";
+  }
+
+  if (signalMode === "constant" && xEnabled) {
+    statusText.textContent =
+      "X mit konstanter Y-Spannung: " +
+      "Der Punkt zeichnet eine waagerechte Linie.";
+  }
+
+  if (signalMode === "sine") {
+    statusText.textContent = xEnabled
+      ? "X- und Y-Ablenkung: Der Punkt zeichnet " +
+        "eine sinusförmige Wechselspannung."
+      : "Sinusförmige Wechselspannung: " +
+        "Der Punkt bewegt sich auf und ab. " +
+        "Schalte X ein, um die Wellenkurve zu sehen.";
+  }
+
+  if (signalMode === "saw") {
+    statusText.textContent = xEnabled
+      ? "Sägezahnspannung als Messsignal: " +
+        "Der Punkt zeichnet einen gleichmäßigen Anstieg " +
+        "mit schnellem Rücksprung."
+      : "Sägezahnspannung: " +
+        "Der Punkt bewegt sich auf und ab. " +
+        "Schalte X ein, um die Sägezahnform zu sehen.";
+  }
+}
+
+// Schieberegler
+slider.addEventListener("input", () => {
+  yVoltage = Number(slider.value);
+  updateUI();
+});
+
+// X-Ablenkung
+xButton.addEventListener("click", () => {
+  xEnabled = !xEnabled;
+  phase = 0;
+  updateUI();
+});
+
+// Wechselspannung
+sineButton.addEventListener("click", () => {
+  signalMode = signalMode === "sine"
+    ? "constant"
+    : "sine";
+
+  phase = 0;
+  updateUI();
+});
+
+// Sägezahnspannung
+sawButton.addEventListener("click", () => {
+  signalMode = signalMode === "saw"
+    ? "constant"
+    : "saw";
+
+  phase = 0;
+  updateUI();
+});
+
+// Zurücksetzen
+resetButton.addEventListener("click", () => {
+  yVoltage = 3;
+  xEnabled = false;
+  signalMode = "constant";
+  phase = 0;
+
+  slider.value = 3;
+
+  updateUI();
+});
+
+// Animationsschleife
+function animate(timestamp) {
+  if (previousTime === null) {
+    previousTime = timestamp;
+  }
+
+  const delta = Math.min(
+    (timestamp - previousTime) / 1000,
+    0.1
+  );
+
+  previousTime = timestamp;
+
+  if (xEnabled) {
+    phase = (phase + delta / sweepDuration) % 1;
+  } else if (signalMode !== "constant") {
+    // Ohne X-Ablenkung bewegt sich der Punkt
+    // nur senkrecht.
+    phase = (phase + delta / sweepDuration) % 1;
+  }
+
+  drawGrid();
+  drawTrace(phase);
+  drawVoltageText();
+
+  const x = xEnabled
+    ? plot.left + phase * plotWidth
+    : plot.left + plotWidth / 2;
+
+  const voltage = getVoltageAtPhase(phase);
+  const y = voltageToY(voltage);
+
+  drawDot(x, y);
+
+  requestAnimationFrame(animate);
+}
+
+// Start
+updateUI();
+requestAnimationFrame(animate);
+
 </script>
+
+</body>
+</html>
